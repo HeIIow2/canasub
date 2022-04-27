@@ -1,5 +1,6 @@
 #include "Motor.h"
 
+
 #define MAX_SPEED 255
 
 Motor::Motor()
@@ -49,3 +50,5 @@ void Motor::SetSpeed(float speed_)
 
 	analogWrite(enable, speed_ * MAX_SPEED);
 }
+
+

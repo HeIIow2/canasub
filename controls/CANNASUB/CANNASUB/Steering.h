@@ -1,5 +1,7 @@
 #include "Motor.h"
 
+
+
 struct VECTOR2
 {
     float x, y;
@@ -15,5 +17,11 @@ class Steering
     public:
 
     Steering();
+
+    void Left();
+
+    void Right();
+
+    void Turn();
 
 }
