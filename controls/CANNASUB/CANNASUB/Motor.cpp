@@ -8,6 +8,8 @@ Motor::Motor()
 	enable = 0;
 	in1 = 0;
 	in2 = 0;
+
+	speed = 0;
 }
 
 Motor::Motor(int en_, int in1_, int in2_)
@@ -15,6 +17,8 @@ Motor::Motor(int en_, int in1_, int in2_)
 	enable = en_;
 	in1 = in1_;
 	in2 = in2_;
+
+	speed = 0;
 
 	pinMode(enable, OUTPUT);
 	pinMode(in1, OUTPUT);
@@ -44,11 +48,18 @@ void Motor::backwards()
 
 void Motor::SetSpeed(float speed_)
 {
+	speed = speed_;
+
 	if (speed_ < 0.0 || speed_ > 1.0) {
 		return;
 	}
 
 	analogWrite(enable, speed_ * MAX_SPEED);
+}
+
+float Motor::GetSpeed()
+{
+	return speed;
 }
 
 

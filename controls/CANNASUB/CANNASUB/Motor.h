@@ -8,6 +8,8 @@ private:
 	int in1;
 	int in2;
 
+	float speed;
+
 public:
 	Motor();
 	Motor(int en_, int in1_, int in2_);
@@ -17,4 +19,5 @@ public:
 	void backwards();
 
 	void SetSpeed(float speed_);
+	float GetSpeed();
 };
