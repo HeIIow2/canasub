@@ -1,5 +1,7 @@
 #include "Steering.h"
 
+#define PI 3.14159265359
+
 void VECTOR2::ConvertToVector()
 {
     
