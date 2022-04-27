@@ -73,4 +73,7 @@ void loop()
             Serial.println("LIGHT(" + String(x_light) + "/" + String(y_light) + ")");
        }
     }
+
+
+    Serial.println("");
 }
