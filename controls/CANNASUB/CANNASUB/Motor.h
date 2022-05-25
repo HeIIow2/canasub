@@ -19,5 +19,6 @@ public:
 	void backwards();
 
 	void SetSpeed(float speed_);
+	void StartMotor(float speed_);
 	float GetSpeed();
 };

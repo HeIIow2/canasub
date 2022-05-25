@@ -57,6 +57,19 @@ void Motor::SetSpeed(float speed_)
 	analogWrite(enable, speed_ * MAX_SPEED);
 }
 
+void Motor::StartMotor(float speed_)
+{
+	if (speed == NULL || speed == _speed)return;
+	
+	while(speed < speed_)
+	{
+		speed += 0.01;
+		SetSpeed(speed);
+		delay(10);
+	}
+
+}
+
 float Motor::GetSpeed()
 {
 	return speed;
