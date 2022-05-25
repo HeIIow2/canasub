@@ -1,17 +1,55 @@
-#define SENSOR_PAIRS 1
+#define SENSOR_PAIRS 2
 #define PAIR_SENSOR_DISTANCE 1.0
+#define DISTANCE_BETWEEN_PAIRS 9.0
 #define MEASURING_TIME 50
 
+#define RESET_X_INTERVAL 1000
+
+int last_reset_x;
+const int computation_count = (int) (SENSOR_PAIRS / 2) + (SENSOR_PAIRS % 2);
+int computation_list[computation_count][2];
 
 void setup() 
 {
-    Serial.begin(9600);
+    Serial.begin(38400);
+    Serial.println("Start");
+
+    {
+        /*
+        Ich erstelle eine Liste, bei der jedes element eine Liste von zwei Werte ist.
+        Die beiden Werte sind die Indices der Sensorenpaare die ich hintereinander messe.
+        */
+        int steps = (int) SENSOR_PAIRS / 2;
+
+        if (SENSOR_PAIRS % 2 == 1) 
+        {
+            computation_list[0][0] = 0;
+            computation_list[0][1] = SENSOR_PAIRS - 1;
+
+            Serial.println(String(computation_list[0][0]) + " " + String(computation_list[0][1]));
+        }
+
+        for (int i=SENSOR_PAIRS % 2; i <= steps; i++)
+        {
+            computation_list[i][0] = i;
+            computation_list[i][1] = i + steps;
+
+            Serial.println(String(computation_list[i][0]) + " " + String(computation_list[i][1]));
+        }
+    }
+
     Serial.println("Started");
+
+    last_reset_x = millis();
 }
 
 
 void loop() 
 {
+    // x is the factor to multiply the sensor distance by to get the distance in cm
+    float x = 0;
+    unsigned int x_measurements = 0;
+
     int start_time = millis();
 
     static float sensor_pair_values[SENSOR_PAIRS][2];
@@ -49,10 +87,33 @@ void loop()
     }
 
     {
+        // calculate the x factor
+        for (int index = 0; index < computation_count; index++) {
+            int i = computation_list[index][0];
+            int j = computation_list[index][1];
+
+            float a = sensor_pair_values[i][0];
+            float b = sensor_pair_values[i][1];
+            float c = sensor_pair_values[j][0];
+            float d = sensor_pair_values[j][1];
+
+            int x_ = (2.0 * (3.0 * (b*b) + (c*c) - 3.0 * (d*d)) * (PAIR_SENSOR_DISTANCE*PAIR_SENSOR_DISTANCE)) / ((b*b*b*b) - ((c*c) - (d * d)));
+            Serial.println("x_:" + String(x_));
+            x_measurements++;
+        }
+        
+        /*
+        p: PAIR_SENSOR_DISTANCE
+        */
+    }
+
+    {
         /*
         trianguliere die beiden möglichen positionen der Lichtquelle
         da nur der Winkel wichtig ist ist die länge in cm egal 
         */
+
+       float lights_positions[SENSOR_PAIRS][2];
 
        for (int i = 0; i < SENSOR_PAIRS; i++)
        {
@@ -67,6 +128,15 @@ void loop()
             Serial.println("LIGHT(" + String(x_light) + "/" + String(y_light) + ")");
        }
     }
+
+    // reset x if the interval passed
+    if (millis() - last_reset_x > RESET_X_INTERVAL)
+    {
+        last_reset_x = millis();
+        x = 0;
+        x_measurements = 0;
+    }
+
 
     int end_time = millis();
     Serial.println("Time: " + String(end_time - start_time) + "ms");
