@@ -13,10 +13,12 @@ Steering::Steering()
     BackMotor = Motor();
 }
 
-Steering::Steering(Motor frontMotor, Motor backMotor)
+Steering::Steering(Motor _drive, Pump Pump_Front, Pump Pump_Back)
 {
-    FrontMotor = frontMotor;
-    BackMotor = backMotor;
+    drive = _drive;
+    FrontPump = Pump_Front;
+    BackPump = Pump_Back;
+
 }
 
 void Steering::Left()
@@ -34,11 +36,33 @@ void Steering::Left()
 
 }
 
-void Steering::CalcTurnWay(float angle)
+void Steering::Turn(float angle)
 {
-    float FrontMotorSpeed = FrontMotor.GetSpeed();
-    float BackMotorSpeed = BackMotor.GetSpeed();
+    pump1.setSpeed(a);
+    pump2.setSpeed(a);
 
-    
+    if (angle == 0) return;
+
+
+}
+
+void Steering::Steer()
+{
+    if(V_BOX.x == V_SUB.x && V_BOX.y == V_SUB.y)
+    {
+        drive.setSpeed(0);
+
+        return;
+    }
+
+    if(drive.GetSpeed() == 0) drive.StartMotor(speed_);
+
+    WayToBox = sqrt(pow(V_BOX.x - V_SUB.x, 2) + pow(V_BOX.y - V_SUB.y, 2));
+
+    if(WayToBoxPrev != WayToBox)
+    {
+        Turn(WayToBox);
+        WayToBoxPrev = WayToBox;
+    }
 
 }
