@@ -14,8 +14,10 @@ class Steering
 {
     private:
 
-    Motor FrontMotor;
-    Motor BackMotor;
+    VECTOR2 V_SUB;
+    VECTOR2 V_BOX;
+
+    Motor drive;
 
     public:
 
@@ -26,6 +28,8 @@ class Steering
     void Left();
 
     void Right();
+
+    void Turn(float angle);
 
     CalcTurnWay(float angle);
 

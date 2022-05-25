@@ -34,11 +34,13 @@ void Steering::Left()
 
 }
 
+void Steering::Turn(float angle)
+{
+    
+}
+
 void Steering::CalcTurnWay(float angle)
 {
     float FrontMotorSpeed = FrontMotor.GetSpeed();
     float BackMotorSpeed = BackMotor.GetSpeed();
-
-    
-
 }
