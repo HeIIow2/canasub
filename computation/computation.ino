@@ -1,18 +1,19 @@
 #define SENSOR_PAIRS 2
-#define PAIR_SENSOR_DISTANCE 1.0
-#define DISTANCE_BETWEEN_PAIRS 9.0
+#define COMPUTATION_COUNT (int) (SENSOR_PAIRS / 2) + (SENSOR_PAIRS % 2)
+#define PAIR_SENSOR_DISTANCE 1.0f
+#define DISTANCE_BETWEEN_PAIRS 9.0f
 #define MEASURING_TIME 50
 
 #define RESET_X_INTERVAL 1000
 
 int last_reset_x;
-const int computation_count = (int) (SENSOR_PAIRS / 2) + (SENSOR_PAIRS % 2);
-int computation_list[computation_count][2];
+int computation_list[COMPUTATION_COUNT][2];
+int x_measurements = 0;
 
 void setup() 
 {
-    Serial.begin(38400);
-    Serial.println("Start");
+    Serial.begin(9600);
+    Serial.println("Computation started");
 
     {
         /*
@@ -25,16 +26,12 @@ void setup()
         {
             computation_list[0][0] = 0;
             computation_list[0][1] = SENSOR_PAIRS - 1;
-
-            Serial.println(String(computation_list[0][0]) + " " + String(computation_list[0][1]));
         }
 
         for (int i=SENSOR_PAIRS % 2; i <= steps; i++)
         {
             computation_list[i][0] = i;
             computation_list[i][1] = i + steps;
-
-            Serial.println(String(computation_list[i][0]) + " " + String(computation_list[i][1]));
         }
     }
 
@@ -47,10 +44,9 @@ void setup()
 void loop() 
 {
     // x is the factor to multiply the sensor distance by to get the distance in cm
-    float x = 0;
-    unsigned int x_measurements = 0;
+    static float x = 0;
 
-    int start_time = millis();
+    static int start_time = millis();
 
     static float sensor_pair_values[SENSOR_PAIRS][2];
     {
@@ -66,16 +62,24 @@ void loop()
         {
             for (int i = 0; i < SENSOR_PAIRS; i++)
             {
+                Serial.print(i);
+                Serial.print(" ");
+                Serial.print(analogRead(i*2));
+                Serial.print(" ");
+                Serial.println(analogRead(i*2+1));
                 sensor_pair_values[i][0] += (float) analogRead(i*2);
                 sensor_pair_values[i][1] += (float) analogRead(i*2+1);
             }
+            Serial.println("");
             mesurements++;
         }
         
         for (int i = 0; i < SENSOR_PAIRS; i++)
         {
-            sensor_pair_values[i][0] = sensor_pair_values[i][0] / mesurements / 1023.0;
-            sensor_pair_values[i][1] = sensor_pair_values[i][1] / mesurements / 1023.0;
+            // sensor_pair_values[i][0] = sensor_pair_values[i][0] / mesurements / 1023.0;
+            // sensor_pair_values[i][1] = sensor_pair_values[i][1] / mesurements / 1023.0;
+            sensor_pair_values[i][0] = sensor_pair_values[i][0] / mesurements;
+            sensor_pair_values[i][1] = sensor_pair_values[i][1] / mesurements;
             Serial.print("p" + String(i) + " ");
             Serial.print(sensor_pair_values[i][0]);
             Serial.print(" ");
@@ -88,7 +92,7 @@ void loop()
 
     {
         // calculate the x factor
-        for (int index = 0; index < computation_count; index++) {
+        for (int index = 0; index < COMPUTATION_COUNT; index++) {
             int i = computation_list[index][0];
             int j = computation_list[index][1];
 
@@ -97,8 +101,8 @@ void loop()
             float c = sensor_pair_values[j][0];
             float d = sensor_pair_values[j][1];
 
-            int x_ = (2.0 * (3.0 * (b*b) + (c*c) - 3.0 * (d*d)) * (PAIR_SENSOR_DISTANCE*PAIR_SENSOR_DISTANCE)) / ((b*b*b*b) - ((c*c) - (d * d)));
-            Serial.println("x_:" + String(x_));
+            x = (2.0 * (3.0 * (b*b) + (c*c) - 3.0 * (d*d)) * (PAIR_SENSOR_DISTANCE*PAIR_SENSOR_DISTANCE)) / ((b*b*b*b) - ((c*c) - (d * d)));
+            Serial.println("x:" + String(x));
             x_measurements++;
         }
         
@@ -125,7 +129,7 @@ void loop()
             float y_opt1 = sqrt(abs(x_light*x_light - sensor_pair_values[i][0]*sensor_pair_values[i][0]));
             float y_opt2 = sqrt(abs(x_light*x_light - sensor_pair_values[i][1]*sensor_pair_values[i][1]));
             float y_light = (y_opt1 + y_opt2) / 2.0;
-            Serial.println("LIGHT(" + String(x_light) + "/" + String(y_light) + ")");
+            Serial.println("LIGHT(" + String(x_light * x) + "/" + String(y_light * x) + ")");
        }
     }
 
