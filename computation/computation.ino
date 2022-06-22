@@ -1,3 +1,5 @@
+#include<Wire.h>
+
 #define SENSOR_PAIRS 2
 #define COMPUTATION_COUNT (int) (SENSOR_PAIRS / 2) + (SENSOR_PAIRS % 2)
 #define PAIR_SENSOR_DISTANCE 1.0f
@@ -6,12 +8,40 @@
 
 #define RESET_X_INTERVAL 1000
 
+#define ADRESS 1
+#define EXPECTED_BYTES BYTES_PER_FLOAT*2
+#define BYTES_PER_FLOAT 4
+
 int last_reset_x;
 int computation_list[COMPUTATION_COUNT][2];
 int x_measurements = 0;
 
+
+char float_buff[BYTES_PER_FLOAT];
+void send_float(float to_send) 
+{
+    // NEEDS TO HAVE AN OPEN TRANSMISSION
+    dtostrf(to_send,3,2, float_buff);
+    Serial.print("writing ");
+    Serial.println(float_buff);
+    Wire.write(0x00);
+    Wire.write(float_buff);
+}
+
+void send_data(float x_part, float y_part) 
+{
+    Wire.beginTransmission(ADRESS);
+
+    send_float(x_part);
+    send_float(y_part);
+
+    Wire.endTransmission();
+}
+
 void setup() 
 {
+    Wire.begin();
+
     Serial.begin(9600);
     Serial.println("Computation started");
 
@@ -46,7 +76,7 @@ void loop()
     // x is the factor to multiply the sensor distance by to get the distance in cm
     static float x = 0;
 
-    static int start_time = millis();
+    static unsigned long start_time = millis();
 
     static float sensor_pair_values[SENSOR_PAIRS][2];
     {
@@ -118,6 +148,7 @@ void loop()
         */
 
        float lights_positions[SENSOR_PAIRS][2];
+       float light_avr_pos[2] = {0.0f, 0.0f};
 
        for (int i = 0; i < SENSOR_PAIRS; i++)
        {
@@ -129,20 +160,21 @@ void loop()
             float y_opt1 = sqrt(abs(x_light*x_light - sensor_pair_values[i][0]*sensor_pair_values[i][0]));
             float y_opt2 = sqrt(abs(x_light*x_light - sensor_pair_values[i][1]*sensor_pair_values[i][1]));
             float y_light = (y_opt1 + y_opt2) / 2.0;
-            Serial.println("LIGHT(" + String(x_light * x) + "/" + String(y_light * x) + ")");
+
+            // add computed val to the avr list, which is divided later
+            light_avr_pos[0] = x_light * x;
+            light_avr_pos[1] = y_light * x;
+            // Serial.println("LIGHT(" + String(x_light * x) + "/" + String(y_light * x) + ")");
        }
+       light_avr_pos[0] = light_avr_pos[0] / SENSOR_PAIRS;
+       light_avr_pos[1] = light_avr_pos[1] / SENSOR_PAIRS;
+
+       // send the Data
+       Serial.println("LIGHT(" + String(light_avr_pos[0]) + "/" + String(light_avr_pos[1]) + ")");
+       send_data(light_avr_pos[0], light_avr_pos[1]);
     }
 
-    // reset x if the interval passed
-    if (millis() - last_reset_x > RESET_X_INTERVAL)
-    {
-        last_reset_x = millis();
-        x = 0;
-        x_measurements = 0;
-    }
-
-
-    int end_time = millis();
+    static unsigned long end_time = millis();
     Serial.println("Time: " + String(end_time - start_time) + "ms");
     Serial.println("");
 }
