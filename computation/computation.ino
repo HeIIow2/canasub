@@ -9,38 +9,21 @@
 #define RESET_X_INTERVAL 1000
 
 #define ADRESS 1
+#define BYTES_PER_FLOAT 8
 #define EXPECTED_BYTES BYTES_PER_FLOAT*2
-#define BYTES_PER_FLOAT 4
 
 int last_reset_x;
 int computation_list[COMPUTATION_COUNT][2];
 int x_measurements = 0;
 
+float x_vector = 0;
+float y_vector = 0;
 
-char float_buff[BYTES_PER_FLOAT];
-void send_float(float to_send) 
-{
-    // NEEDS TO HAVE AN OPEN TRANSMISSION
-    dtostrf(to_send,3,2, float_buff);
-    Serial.print("writing ");
-    Serial.println(float_buff);
-    Wire.write(0x00);
-    Wire.write(float_buff);
-}
-
-void send_data(float x_part, float y_part) 
-{
-    Wire.beginTransmission(ADRESS);
-
-    send_float(x_part);
-    send_float(y_part);
-
-    Wire.endTransmission();
-}
 
 void setup() 
 {
-    Wire.begin();
+    Wire.begin(ADRESS);
+    Wire.onRequest(requestEvent);
 
     Serial.begin(9600);
     Serial.println("Computation started");
@@ -68,6 +51,21 @@ void setup()
     Serial.println("Started");
 
     last_reset_x = millis();
+}
+
+char float_buff[BYTES_PER_FLOAT];
+void send_float(float to_send) 
+{
+    dtostrf(to_send,3,BYTES_PER_FLOAT, float_buff);
+    Serial.print("writing ");
+    Serial.println(float_buff);
+    Wire.write(float_buff, BYTES_PER_FLOAT);
+}
+
+void requestEvent()
+{
+    send_float(x_vector);
+    send_float(y_vector);
 }
 
 
@@ -169,11 +167,12 @@ void loop()
        light_avr_pos[0] = light_avr_pos[0] / SENSOR_PAIRS;
        light_avr_pos[1] = light_avr_pos[1] / SENSOR_PAIRS;
 
+        x_vector = light_avr_pos[0];
+        y_vector = light_avr_pos[1];
+
        // send the Data
        Serial.println("LIGHT(" + String(light_avr_pos[0]) + "/" + String(light_avr_pos[1]) + ")");
-       send_data(light_avr_pos[0], light_avr_pos[1]);
     }
-
     static unsigned long end_time = millis();
     Serial.println("Time: " + String(end_time - start_time) + "ms");
     Serial.println("");
